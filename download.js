@@ -4,15 +4,41 @@ const https = require('https');
 // const { exec } = require("child_process");
 
 if (process.argv.length < 3) {
-    console.log(`Usage: node download.js {Video LINK} quality`);
+    console.log(`Usage: node download.js {Video LINK} or {*.txt FILE PATH} Quality`);
     return;
 }
-let id = process.argv[2];
-let quality = process.argv[3] || 1080;
-id = id.replace('https://player.vimeo.com/video/', '').replace('?', '').replace('autoplay=1', '').replace(/[&?]/gm, '').replace(/app_id=(.*)/gm, '');
 
-// Default APP ID is 122963
-startDownloadByID(id, quality, 122963)
+(async()=>{
+  try {
+
+    let input = process.argv[2];
+    const defaultQuality = 1080;
+    let quality = process.argv[3] || defaultQuality;
+
+    if(input.includes('.txt')) {
+
+      var data = fs.readFileSync(input, 'utf8');
+      data = data.split("\n");
+
+      for (let v of data) {
+        if (v.length > 10) {
+          let id = v.trim();
+          id = id.replace('https://player.vimeo.com/video/', '').replace('?', '').replace('autoplay=1', '').replace(/[&?]/gm, '').replace(/app_id=(.*)/gm, '');
+          // Default APP ID is 122963
+          await startDownloadByID(id, defaultQuality, 122963)
+        }
+      }
+
+      console.log("Done.");
+    } else {
+      const id = input.replace('https://player.vimeo.com/video/', '').replace('?', '').replace('autoplay=1', '').replace(/[&?]/gm, '').replace(/app_id=(.*)/gm, '');
+      // Default APP ID is 122963
+      await startDownloadByID(id, quality, 122963)
+    }
+  } catch (e) {
+    console.log('Error on read file:', e.stack);
+  }
+})()
 
 async function startDownloadByID(vID, quality, appID) {
     try {
